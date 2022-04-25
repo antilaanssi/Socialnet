@@ -2,6 +2,7 @@ import collections
 import pickle
 import networkx as nx
 from numpy import random
+import numpy as np
 import matplotlib.pylab as plt
 from matplotlib import gridspec
 import pandas as pd
@@ -9,6 +10,7 @@ import csv
 from collections import Counter
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import plotly.express as px
+from tabulate import tabulate
 
 def countHashtags(hashtags):
     '''
@@ -28,6 +30,8 @@ def countHashtags(hashtags):
             final_split.append(i)
     
     counted = Counter(final_split)
+
+    print(final_split)
 
     return counted, final_split
         
@@ -76,11 +80,53 @@ def makeGraph(tweets):
     nodes indicate there is atleast one post with that hashtag.
     tweets = dictionary of tweets
     '''
-    G = nx.Graph()
-    G.add_edge('A', 'B')
-    G.add_edge('B', 'A')
-    nx.spring_layout(G)
-    nx.draw_networkx(G)
+    A = np.array(tweets)
+    A = nx.from_numpy_array(A, create_using=nx.MultiGraph)
+    A.edges(data=True)
+    nx.draw(G)
+
+    plt.show()
+
+def calculateProperties(G):
+    '''
+    Makes a table of global properties of the graph.
+    Takes the graph constructed in makegraph() as input.
+    Number of nodes, number of edges, average degree centrality, diameter, clustering coefficient, size of largest component
+    '''
+
+    
+    nodes = G.number_of_nodes() #count number of nodes in graph
+    edges = G.number_of_edges() #count number of edges in graph
+    degreeCent = nx.degree_centrality(G) #Calculate degree centrality of graph
+    diameter = nx.diameter(G, e=None, usebounds=False) #diameter of graph
+    cluster = nx.clustering(G, nodes=None, weight=None)#clustering coefficient of nodes
+    largestComponent = max(nx.connected_component_subgraphs(G), key=len) #Largest component of graph.
+
+    data = [
+        ["nodes", "nodes"],
+        ["edges", "edges"],
+        ["Degree centrality", "degreeCent"],
+        ["diameter", "diameter"], 
+        ["Cluster", "cluster"]
+        ["Largest component", "largestComponent"]
+    ]
+
+    head = ["Name", "Value"]
+    print(tabulate(data, headers=head, tablefmt="grid"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
 
 
@@ -105,13 +151,10 @@ if __name__ == "__main__":
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
     #drawPiechart(df)
 
-    analyzedArray = textAnalyze(df['Text'].to_numpy())
+    #analyzedArray = textAnalyze(df['Text'].to_numpy())
     #print(analyzedArray)
     #ternaryplot(analyzedArray)
-    makeGraph(final)
     
-
-
 
     '''
     #Use VADER tool (https://github.com/cjhutto/vaderSentiment), which output sentiment in terms
