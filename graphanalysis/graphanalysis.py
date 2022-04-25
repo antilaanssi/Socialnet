@@ -1,6 +1,7 @@
 import collections
 import pickle
 import networkx as nx
+from matplotlib.cm import ScalarMappable
 from numpy import random
 import numpy as np
 import matplotlib.pylab as plt
@@ -10,7 +11,7 @@ import csv
 from collections import Counter
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import plotly.express as px
-from tabulate import tabulate
+from networkx.algorithms import community
 
 def countHashtags(hashtags):
     '''
@@ -87,6 +88,7 @@ def makeGraph(tweets):
 
     plt.show()
 
+
 def calculateProperties(G):
     '''
     Makes a table of global properties of the graph.
@@ -95,24 +97,121 @@ def calculateProperties(G):
     '''
 
     
-    nodes = G.number_of_nodes() #count number of nodes in graph
-    edges = G.number_of_edges() #count number of edges in graph
-    degreeCent = nx.degree_centrality(G) #Calculate degree centrality of graph
-    diameter = nx.diameter(G, e=None, usebounds=False) #diameter of graph
-    cluster = nx.clustering(G, nodes=None, weight=None)#clustering coefficient of nodes
-    largestComponent = max(nx.connected_component_subgraphs(G), key=len) #Largest component of graph.
+    #nodes = G.number_of_nodes() #count number of nodes in graph
+    #edges = G.number_of_edges() #count number of edges in graph
+    #degreeCent = nx.degree_centrality(G) #Calculate degree centrality of graph
+    #diameter = nx.diameter(G, e=None, usebounds=False) #diameter of graph
+    #cluster = nx.clustering(G, nodes=None, weight=None)#clustering coefficient of nodes
+    #largestComponent = max(nx.connected_component_subgraphs(G), key=len) #Largest component of graph.
 
+    #remove parentheses from right side to have the actual value in the table.
     data = [
         ["nodes", "nodes"],
         ["edges", "edges"],
         ["Degree centrality", "degreeCent"],
         ["diameter", "diameter"], 
-        ["Cluster", "cluster"]
+        ["Cluster", "cluster"],
         ["Largest component", "largestComponent"]
     ]
 
-    head = ["Name", "Value"]
-    print(tabulate(data, headers=head, tablefmt="grid"))
+    fig, ax = plt.subplots()
+    fig.patch.set_visible(False)
+    #hide axles
+    ax.axis('off')
+    ax.axis('tight')
+
+    #show table
+    table = ax.table(cellText=data, loc='center')
+    fig.tight_layout()
+    plt.show()
+
+    
+
+def plotDegree(G):
+    '''
+    Plot degree distribution of graph
+    '''
+
+
+    degrees = [G.degree(n) for n in G.nodes()]
+    plt.hist(degrees)
+    plt.show()
+
+def plotLocal(G):
+    g = nx.erdos_renyi_graph(50, 0.1, seed=None, directed=False)
+    gc = g.subgraph(max(nx.connected_components(g)))
+    lcc = nx.clustering(gc)
+
+    fig, (ax2) = plt.subplots(ncols=1, figsize=(12, 4))
+
+    ax2.hist(lcc.values(), bins=10)
+    ax2.set_xlabel('Clustering')
+    ax2.set_ylabel('Frequency')
+
+    plt.tight_layout()
+    plt.show()
+
+def labelPropagation(G):
+
+    G = nx.erdos_renyi_graph(50, 0.1, seed=None, directed=False)
+
+    communities = community.label_propagation_communities(G)
+
+    set_node_community(G, communities)
+    set_edge_community(G)
+    node_color = [get_color(G.nodes[v]['community']) for v in G.nodes]
+    # Set community color for edges between members of the same community (internal) and intra-community edges (external)
+    external = [(v, w) for v, w in G.edges if G.edges[v, w]['community'] == 0]
+    internal = [(v, w) for v, w in G.edges if G.edges[v, w]['community'] > 0]
+    internal_color = ['black' for e in internal]
+    
+
+    pos = nx.spring_layout(G)
+    plt.rcParams.update({'figure.figsize': (15, 10)})
+    # Draw external edges
+    nx.draw_networkx(
+        G,
+        pos=pos,
+        node_size=0,
+        edgelist=external,
+        edge_color="silver")
+    # Draw nodes and internal edges
+    nx.draw_networkx(
+        G,
+        pos=pos,
+        node_color=node_color,
+        edgelist=internal,
+        edge_color=internal_color)
+
+    plt.show()
+
+def set_node_community(G, communities):
+        '''Add community to node attributes'''
+        for c, v_c in enumerate(communities):
+            for v in v_c:
+                # Add 1 to save 0 for external edges
+                G.nodes[v]['community'] = c + 1
+
+def set_edge_community(G):
+        '''Find internal edges and add their community to their attributes'''
+        for v, w, in G.edges:
+            if G.nodes[v]['community'] == G.nodes[w]['community']:
+                # Internal edge, mark with community
+                G.edges[v, w]['community'] = G.nodes[v]['community']
+            else:
+                # External edge, mark as 0
+                G.edges[v, w]['community'] = 0
+
+def get_color(i, r_off=1, g_off=1, b_off=1):
+        '''Assign a color to a vertex.'''
+        r0, g0, b0 = 0, 0, 0
+        n = 16
+        low, high = 0.1, 0.9
+        span = high - low
+        r = low + span * (((i + r_off) * 3) % n) / (n - 1)
+        g = low + span * (((i + g_off) * 5) % n) / (n - 1)
+        b = low + span * (((i + b_off) * 7) % n) / (n - 1)
+        return (r, g, b)
 
 
 
@@ -154,6 +253,12 @@ if __name__ == "__main__":
     #analyzedArray = textAnalyze(df['Text'].to_numpy())
     #print(analyzedArray)
     #ternaryplot(analyzedArray)
+    
+    #calculateProperties(G)
+
+    #plotLocal(G)
+    a=1
+    labelPropagation(a)
     
 
     '''
