@@ -1,5 +1,9 @@
+from ast import increment_lineno
 import collections
+from email.utils import parsedate
 import pickle
+from xml.dom.minicompat import NodeList
+from xml.etree.ElementInclude import include
 import networkx as nx
 from matplotlib.cm import ScalarMappable
 from numpy import random
@@ -33,8 +37,20 @@ def countHashtags(hashtags):
     counted = Counter(final_split)
 
     print(final_split)
-
     return counted, final_split
+
+def parseHashtags(hashtags):
+    parsed = []
+    for hashtag in hashtags['Hashtags']:
+        tempList = []
+        splitted = hashtag.split(", ")
+        for i in splitted:
+            i = i.replace("'", "")
+            i = i.replace("{", "")
+            i = i.replace("}", "")
+            tempList.append(i)
+        parsed.append(tempList)
+    return parsed
         
 def drawHistogram(data):
     '''
@@ -84,8 +100,7 @@ def makeGraph(tweets):
     A = np.array(tweets)
     A = nx.from_numpy_array(A, create_using=nx.MultiGraph)
     A.edges(data=True)
-    nx.draw(G)
-
+    
     plt.show()
 
 
@@ -213,6 +228,21 @@ def get_color(i, r_off=1, g_off=1, b_off=1):
         b = low + span * (((i + b_off) * 7) % n) / (n - 1)
         return (r, g, b)
 
+def build_hashtag_graph(list_of_hashtags, parsedTweets):
+    G = nx.Graph()
+    G.add_nodes_from(list_of_hashtags)
+
+    for allHashtagsInTweet in parsedTweets: #lista hashtageista esim. [Ukraine, Russia]
+        for hashtags in allHashtagsInTweet: # yksittäiset hashtagit esim. Ukraine -> Russia
+            current = hashtags
+            for hashtags in allHashtagsInTweet: # yksittäiset hashtagit, mutta current on yksitellen Esim. Current: Ukraine, Ukraine -> Russia. Current: Russia, Ukraine -> Russia
+                if current != hashtags:
+                    G.add_edge(current, hashtags)
+
+    nx.draw(G, with_labels = True)
+    
+    return
+
 
 
 
@@ -239,13 +269,16 @@ if __name__ == "__main__":
         # pull in each row as a key-value pair
     #    dictionary_of_tweets = dict(reader)
     
-    df = pd.read_csv('tweetsdata_00.csv', encoding="utf8", usecols=['Language','Text','Hashtags'])
+    df = pd.read_csv('D:\\GIT\\Socialnet\\graphanalysis\\tweetsdata_00.csv', encoding="utf8", usecols=['Language','Text','Hashtags'])
     hashtags = df['Hashtags'].to_numpy()
     
     #print(hashtags)
     
     #Draw a histogram showing the popularity of the main hashtags highlighting the number of posts per individual hashtag.
     counted_dict, final = countHashtags(df)
+    parsedHashtags = parseHashtags(df)
+
+    build_hashtag_graph(final, parsedHashtags)
     #drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
     #drawPiechart(df)
