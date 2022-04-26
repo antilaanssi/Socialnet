@@ -137,10 +137,10 @@ def calculateProperties(G):
 
     #remove parentheses from right side to have the actual value in the table.
     data = [
-        ["nodes", nodes],
-        ["edges", edges],
+        ["Nodes", nodes],
+        ["Edges", edges],
         ["Degree centrality", roundedDegreeCent],
-        ["diameter", "Infinite because disconnected"], 
+        ["Diameter", "Infinite because disconnected"], 
         ["Cluster", roundedCluster],
         ["Largest component", G0]
     ]
@@ -303,7 +303,6 @@ if __name__ == "__main__":
     df = pd.read_csv('tweetsdata_17.csv', encoding="utf8", usecols=['Language','Text','Hashtags'])
     hashtags = df['Hashtags'].to_numpy()
     
-    #print(hashtags)
     
     #Draw a histogram showing the popularity of the main hashtags highlighting the number of posts per individual hashtag.
     counted_dict, final = countHashtags(df)
@@ -312,7 +311,7 @@ if __name__ == "__main__":
     G = build_hashtag_graph(final, parsedHashtags)
     #drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
-    #drawPiechart(df)
+    drawPiechart(df)
 
     #analyzedArray = textAnalyze(df['Text'].to_numpy())
     #print(analyzedArray)
