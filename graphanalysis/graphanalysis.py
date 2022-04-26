@@ -17,6 +17,17 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import plotly.express as px
 from networkx.algorithms import community
 
+class tweet:
+    occurrences = 0
+    totalLikes = 0
+
+    def __init__(self, name):
+        self.name = name
+    
+    def AddLikes(amount):
+        occurrences +=1
+        totalLikes += amount
+
 def countHashtags(hashtags):
     '''
     hashtags = panda dataframe with a column 'Hashtags'
@@ -36,7 +47,6 @@ def countHashtags(hashtags):
     
     counted = Counter(final_split)
 
-    print(final_split)
     return counted, final_split
 
 def parseHashtags(hashtags):
@@ -110,23 +120,29 @@ def calculateProperties(G):
     Takes the graph constructed in makegraph() as input.
     Number of nodes, number of edges, average degree centrality, diameter, clustering coefficient, size of largest component
     '''
-
-    
-    #nodes = G.number_of_nodes() #count number of nodes in graph
-    #edges = G.number_of_edges() #count number of edges in graph
-    #degreeCent = nx.degree_centrality(G) #Calculate degree centrality of graph
+ 
+    nodes = G.number_of_nodes() #count number of nodes in graph
+    edges = G.number_of_edges() #count number of edges in graph
+    degreeCent = calculateDegreeCentrality(G, nodes)
+    roundedDegreeCent = round(degreeCent, 4)
     #diameter = nx.diameter(G, e=None, usebounds=False) #diameter of graph
-    #cluster = nx.clustering(G, nodes=None, weight=None)#clustering coefficient of nodes
-    #largestComponent = max(nx.connected_component_subgraphs(G), key=len) #Largest component of graph.
+    
+    
+    cluster = calculateCluster(G, nodes)#clustering coefficient of nodes
+    roundedCluster = round(cluster, 4)
+
+    #Largest component of graph.
+    Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
+    G0 = G.subgraph(Gcc[0])
 
     #remove parentheses from right side to have the actual value in the table.
     data = [
-        ["nodes", "nodes"],
-        ["edges", "edges"],
-        ["Degree centrality", "degreeCent"],
-        ["diameter", "diameter"], 
-        ["Cluster", "cluster"],
-        ["Largest component", "largestComponent"]
+        ["nodes", nodes],
+        ["edges", edges],
+        ["Degree centrality", roundedDegreeCent],
+        ["diameter", "Infinite because disconnected"], 
+        ["Cluster", roundedCluster],
+        ["Largest component", G0]
     ]
 
     fig, ax = plt.subplots()
@@ -139,6 +155,36 @@ def calculateProperties(G):
     table = ax.table(cellText=data, loc='center')
     fig.tight_layout()
     plt.show()
+
+def calculateDegreeCentrality(G, nodes):
+
+    '''
+    Calculates average degree centrality of whole graph.
+    '''
+
+    degreeCent = nx.degree_centrality(G) #Calculate degree centrality of graph
+    
+
+
+    new_output = sum(degreeCent.values())
+    result = new_output/nodes
+
+    return result
+
+def calculateCluster(G, total_nodes):
+
+    '''
+    Calculates average clustering coefficient of whole graph.
+    '''
+    
+    cluster = nx.clustering(G, nodes=None, weight=None) #Calculate cluster coefficient of graph
+
+
+    new_output = sum(cluster.values())
+    result = new_output/total_nodes
+
+    return result
+
 
     
 
@@ -153,8 +199,8 @@ def plotDegree(G):
     plt.show()
 
 def plotLocal(G):
-    g = nx.erdos_renyi_graph(50, 0.1, seed=None, directed=False)
-    gc = g.subgraph(max(nx.connected_components(g)))
+
+    gc = G.subgraph(max(nx.connected_components(G)))
     lcc = nx.clustering(gc)
 
     fig, (ax2) = plt.subplots(ncols=1, figsize=(12, 4))
@@ -168,7 +214,6 @@ def plotLocal(G):
 
 def labelPropagation(G):
 
-    G = nx.erdos_renyi_graph(50, 0.1, seed=None, directed=False)
 
     communities = community.label_propagation_communities(G)
 
@@ -240,23 +285,9 @@ def build_hashtag_graph(list_of_hashtags, parsedTweets):
                     G.add_edge(current, hashtags)
 
     nx.draw(G, with_labels = True)
+    plt.show()
     
-    return
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
+    return G
 
 
 
@@ -269,7 +300,7 @@ if __name__ == "__main__":
         # pull in each row as a key-value pair
     #    dictionary_of_tweets = dict(reader)
     
-    df = pd.read_csv('D:\\GIT\\Socialnet\\graphanalysis\\tweetsdata_00.csv', encoding="utf8", usecols=['Language','Text','Hashtags'])
+    df = pd.read_csv('tweetsdata_17.csv', encoding="utf8", usecols=['Language','Text','Hashtags'])
     hashtags = df['Hashtags'].to_numpy()
     
     #print(hashtags)
@@ -278,7 +309,7 @@ if __name__ == "__main__":
     counted_dict, final = countHashtags(df)
     parsedHashtags = parseHashtags(df)
 
-    build_hashtag_graph(final, parsedHashtags)
+    G = build_hashtag_graph(final, parsedHashtags)
     #drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
     #drawPiechart(df)
@@ -287,11 +318,10 @@ if __name__ == "__main__":
     #print(analyzedArray)
     #ternaryplot(analyzedArray)
     
-    #calculateProperties(G)
+    calculateProperties(G)
 
-    #plotLocal(G)
-    a=1
-    labelPropagation(a)
+    plotLocal(G)
+    labelPropagation(G)
     
 
     '''
