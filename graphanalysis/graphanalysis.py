@@ -1,4 +1,4 @@
-from ast import increment_lineno
+from ast import increment_lineno, parse
 import collections
 from email.utils import parsedate
 import pickle
@@ -17,16 +17,48 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import plotly.express as px
 from networkx.algorithms import community
 
-class tweet:
+class tweet():
+
+    name = ""
     occurrences = 0
     totalLikes = 0
+    totalRetweets = 0
+    totalReplies = 0
+    totalQuotes = 0
 
     def __init__(self, name):
         self.name = name
     
-    def AddLikes(amount):
-        occurrences +=1
-        totalLikes += amount
+    def AddLikes(self, retweets, reply, likes, quote):
+        self.occurrences +=1
+        self.totalLikes += int(likes)
+        self.totalRetweets += int(retweets)
+        self.totalReplies += int(reply)
+        self.totalQuotes += int(quote)
+
+    def PrintInfo(self):
+        print("NAME: " + self.name)
+        print("Occurances: " + str(self.occurrences))
+        print("totalLikes: " + str(self.totalLikes))
+        print("totalRetweets: " + str(self.totalRetweets))
+        print("totalReplies: " + str(self.totalReplies))
+        print("totalQuotes: " + str(self.totalQuotes))
+        print("\n")
+
+#"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
+
+def NodeNameExists(Nodes, target):
+    exists = False
+    for currentTweet in Nodes:
+        if currentTweet.name == target:
+            exists = True
+            break
+    return exists
+
+def NodeNameMatches(Node, target):
+    return Node == target
+
+
 
 def countHashtags(hashtags):
     '''
@@ -48,10 +80,13 @@ def countHashtags(hashtags):
     counted = Counter(final_split)
 
     return counted, final_split
+            
 
-def parseHashtags(hashtags):
-    parsed = []
-    for hashtag in hashtags['Hashtags']:
+
+def parseTweets(tweetsRaw):
+    parsedHashtags = []
+    TweetClasses = []
+    for hashtag in tweetsRaw['Hashtags']:
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -59,8 +94,35 @@ def parseHashtags(hashtags):
             i = i.replace("{", "")
             i = i.replace("}", "")
             tempList.append(i)
-        parsed.append(tempList)
-    return parsed
+
+            if not NodeNameExists(TweetClasses, i):
+                TweetClasses.append(tweet(i))
+
+        parsedHashtags.append(tempList)
+    
+    return parsedHashtags, TweetClasses
+
+
+def ParsePublicMetrics(tweetsRaw):
+    parsedSocials = []
+    for hashtag in tweetsRaw['Public_metrics']:
+        tempList = []
+        splitted = hashtag.split(", ")
+        for i in splitted:
+            i = i.replace("'", "")
+            i = i.replace("{", "")
+            i = i.replace("}", "")
+            i = i.replace("retweet_count", "")
+            i = i.replace("reply_count", "")
+            i = i.replace("like_count", "")
+            i = i.replace("quote_count", "")
+            i = i.replace(":", "")
+            tempList.append(i)
+
+        parsedSocials.append(tempList)
+    
+    return parsedSocials
+
         
 def drawHistogram(data):
     '''
@@ -290,6 +352,27 @@ def build_hashtag_graph(list_of_hashtags, parsedTweets):
     return G
 
 
+def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
+    currentTweetIndex = 0
+    for allHashtagsInTweet in parsedHashtags: #lista twiittien hashtageista
+        for individualHashtags in allHashtagsInTweet: #yksittäisiä hashtageja
+            currentNode = 0
+            for hashtagClasses in parsedSocialInfoClasses:
+                if NodeNameMatches(parsedSocialInfoClasses[currentNode].name, individualHashtags): 
+                    tweetSocials = socials[currentTweetIndex]
+                    parsedSocialInfoClasses[currentNode].AddLikes(tweetSocials[0],tweetSocials[1],tweetSocials[2],tweetSocials[3])
+                currentNode += 1
+        currentTweetIndex += 1
+
+    print(currentTweetIndex)
+                    
+    return parsedSocialInfoClasses
+
+
+
+#"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
+
+
 
 
 if __name__ == "__main__":
@@ -300,13 +383,21 @@ if __name__ == "__main__":
         # pull in each row as a key-value pair
     #    dictionary_of_tweets = dict(reader)
     
-    df = pd.read_csv('tweetsdata_17.csv', encoding="utf8", usecols=['Language','Text','Hashtags'])
+    df = pd.read_csv('tweetsdata_17.csv', encoding="utf8", usecols=['Language','Text','Hashtags', 'Public_metrics'])
     hashtags = df['Hashtags'].to_numpy()
+    
     
     
     #Draw a histogram showing the popularity of the main hashtags highlighting the number of posts per individual hashtag.
     counted_dict, final = countHashtags(df)
-    parsedHashtags = parseHashtags(df)
+    parsedHashtags, parsedSocialInfoClasses = parseTweets(df)
+    parsedSocialMetrics = ParsePublicMetrics(df)
+
+    parsedSocialInfoClasses = FetchSocialAttributes(parsedSocialMetrics, parsedHashtags, parsedSocialInfoClasses)
+
+    for tweetClasses in parsedSocialInfoClasses:
+        tweetClasses.PrintInfo()
+
 
     G = build_hashtag_graph(final, parsedHashtags)
     #drawHistogram(counted_dict)
