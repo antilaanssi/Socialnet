@@ -74,13 +74,14 @@ def countHashtags(hashtags):
     splitted = []
     for hashtag in hashtags['Hashtags']:
         print(hashtag)
-        if (hashtag == None):
-            break
+        if (pd.isna(hashtag) == True):
+            continue
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
             i = i.replace("{", "")
             i = i.replace("}", "")
+            i = i.replace(".", "")
             final_split.append(i)
     
     counted = Counter(final_split)
@@ -93,8 +94,8 @@ def parseTweets(tweetsRaw):
     parsedHashtags = []
     TweetClasses = []
     for hashtag in tweetsRaw['Hashtags']:
-        if (hashtag == None):
-            break
+        if (pd.isna(hashtag) == True):
+            continue
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -114,8 +115,8 @@ def parseTweets(tweetsRaw):
 def ParsePublicMetrics(tweetsRaw):
     parsedSocials = []
     for hashtag in tweetsRaw['Public_metrics']:
-        if (hashtag == None):
-            break
+        if (pd.isna(hashtag) == True):
+            continue
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -165,6 +166,8 @@ def textAnalyze(sentences):
     analyzer = SentimentIntensityAnalyzer()
     analyzed = []
     for sentence in sentences:
+        if (pd.isna(sentence) == True):
+            continue
         analyzed.append(analyzer.polarity_scores(sentence))
     
     return analyzed
@@ -369,10 +372,14 @@ def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
             currentNode = 0
             for hashtagClasses in parsedSocialInfoClasses:
                 if (currentNode > len(parsedSocialInfoClasses)):
-                    break
+                    continue
                 if NodeNameMatches(parsedSocialInfoClasses[currentNode].name, individualHashtags): 
                     tweetSocials = socials[currentTweetIndex]
-                    parsedSocialInfoClasses[currentNode].AddLikes(tweetSocials[0],tweetSocials[1],tweetSocials[2],tweetSocials[3])
+                    print(tweetSocials)
+                    if (tweetSocials[0] == "Public_metrics"):
+                        break
+                    else:
+                        parsedSocialInfoClasses[currentNode].AddLikes(tweetSocials[0],tweetSocials[1],tweetSocials[2],tweetSocials[3])
                 currentNode += 1
         currentTweetIndex += 1
 
@@ -390,6 +397,11 @@ def pearsonCorrelation(centrality):
         likes.append(tweetclasses.totalLikes)
 
     values = list(centrality.values())
+
+    print(len(values))
+    print(len(likes))
+
+
     corr = scipy.stats.pearsonr(likes, values)
     #print(corr[0]) #[0] is pearson correlation
 
@@ -408,9 +420,10 @@ if __name__ == "__main__":
     #    dictionary_of_tweets = dict(reader)
     
     df = pd.read_csv('merged-csv-files.csv', encoding="utf8", usecols=['Language','Text','Hashtags', 'Public_metrics'])
+    
     #df = df['Language'].notnull()
-    #df = df['Text'].notnull()
-    #df = df['Hashtags'].notnull()
+    #df['Text'] = df['Text'].notnull()
+    #df = df['hashtags'].notnull()
     #df = df['Public_metrics'].notnull()
     
 
