@@ -39,13 +39,15 @@ class tweet():
         self.totalQuotes += int(quote)
 
     def PrintInfo(self):
-        print("NAME: " + self.name)
-        print("Occurances: " + str(self.occurrences))
-        print("totalLikes: " + str(self.totalLikes))
-        print("totalRetweets: " + str(self.totalRetweets))
-        print("totalReplies: " + str(self.totalReplies))
-        print("totalQuotes: " + str(self.totalQuotes))
-        print("\n")
+        #do nothing
+        #print("NAME: " + self.name)
+        #print("Occurances: " + str(self.occurrences))
+        #print("totalLikes: " + str(self.totalLikes))
+        #print("totalRetweets: " + str(self.totalRetweets))
+        #print("totalReplies: " + str(self.totalReplies))
+        #print("totalQuotes: " + str(self.totalQuotes))
+        #print("\n")
+        a=a
 
 #"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
 
@@ -71,8 +73,10 @@ def countHashtags(hashtags):
     final_split = []
     splitted = []
     for hashtag in hashtags['Hashtags']:
+        print(hashtag)
+        if (hashtag == None):
+            break
         splitted = hashtag.split(", ")
-        #print(splitted)
         for i in splitted:
             i = i.replace("'", "")
             i = i.replace("{", "")
@@ -89,6 +93,8 @@ def parseTweets(tweetsRaw):
     parsedHashtags = []
     TweetClasses = []
     for hashtag in tweetsRaw['Hashtags']:
+        if (hashtag == None):
+            break
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -108,6 +114,8 @@ def parseTweets(tweetsRaw):
 def ParsePublicMetrics(tweetsRaw):
     parsedSocials = []
     for hashtag in tweetsRaw['Public_metrics']:
+        if (hashtag == None):
+            break
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -360,13 +368,15 @@ def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
         for individualHashtags in allHashtagsInTweet: #yksittäisiä hashtageja
             currentNode = 0
             for hashtagClasses in parsedSocialInfoClasses:
+                if (currentNode > len(parsedSocialInfoClasses)):
+                    break
                 if NodeNameMatches(parsedSocialInfoClasses[currentNode].name, individualHashtags): 
                     tweetSocials = socials[currentTweetIndex]
                     parsedSocialInfoClasses[currentNode].AddLikes(tweetSocials[0],tweetSocials[1],tweetSocials[2],tweetSocials[3])
                 currentNode += 1
         currentTweetIndex += 1
 
-    print(currentTweetIndex)
+    #print(currentTweetIndex)
                     
     return parsedSocialInfoClasses
 
@@ -381,7 +391,7 @@ def pearsonCorrelation(centrality):
 
     values = list(centrality.values())
     corr = scipy.stats.pearsonr(likes, values)
-    print(corr[0]) #[0] is pearson correlation
+    #print(corr[0]) #[0] is pearson correlation
 
 
 #"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
@@ -397,8 +407,15 @@ if __name__ == "__main__":
         # pull in each row as a key-value pair
     #    dictionary_of_tweets = dict(reader)
     
-    df = pd.read_csv('tweetsdata_17.csv', encoding="utf8", usecols=['Language','Text','Hashtags', 'Public_metrics'])
-    hashtags = df['Hashtags'].to_numpy()
+    df = pd.read_csv('merged-csv-files.csv', encoding="utf8", usecols=['Language','Text','Hashtags', 'Public_metrics'])
+    #df = df['Language'].notnull()
+    #df = df['Text'].notnull()
+    #df = df['Hashtags'].notnull()
+    #df = df['Public_metrics'].notnull()
+    
+
+    #hashtags = df['Hashtags'].to_numpy()
+    
     
     
     
@@ -409,23 +426,22 @@ if __name__ == "__main__":
 
     parsedSocialInfoClasses = FetchSocialAttributes(parsedSocialMetrics, parsedHashtags, parsedSocialInfoClasses)
 
-    for tweetClasses in parsedSocialInfoClasses:
-        tweetClasses.PrintInfo()
+    #for tweetClasses in parsedSocialInfoClasses:
+        #tweetClasses.PrintInfo()
 
 
     G = build_hashtag_graph(final, parsedHashtags)
-    #drawHistogram(counted_dict)
+    drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
-    #drawPiechart(df)
+    drawPiechart(df)
 
-    #analyzedArray = textAnalyze(df['Text'].to_numpy())
-    #print(analyzedArray)
-    #ternaryplot(analyzedArray)
+    analyzedArray = textAnalyze(df['Text'].to_numpy())
+    ternaryplot(analyzedArray)
     
-    #calculateProperties(G)
+    calculateProperties(G)
 
-    #plotLocal(G)
-    #labelPropagation(G)
+    plotLocal(G)
+    labelPropagation(G)
 
     degreeCent = nx.degree_centrality(G)
     eigenCent = nx.eigenvector_centrality(G)
