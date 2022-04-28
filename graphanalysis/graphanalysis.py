@@ -16,6 +16,8 @@ from collections import Counter
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import plotly.express as px
 from networkx.algorithms import community
+import scipy
+from scipy import stats
 
 class tweet():
 
@@ -368,6 +370,18 @@ def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
                     
     return parsedSocialInfoClasses
 
+def pearsonCorrelation(centrality):
+
+    likes = []
+    values = []
+
+
+    for tweetclasses in parsedSocialInfoClasses:
+        likes.append(tweetclasses.totalLikes)
+
+    values = list(centrality.values())
+    corr = scipy.stats.pearsonr(likes, values)
+    print(corr[0]) #[0] is pearson correlation
 
 
 #"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
@@ -402,27 +416,22 @@ if __name__ == "__main__":
     G = build_hashtag_graph(final, parsedHashtags)
     #drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
-    drawPiechart(df)
+    #drawPiechart(df)
 
     #analyzedArray = textAnalyze(df['Text'].to_numpy())
     #print(analyzedArray)
     #ternaryplot(analyzedArray)
     
-    calculateProperties(G)
+    #calculateProperties(G)
 
-    plotLocal(G)
-    labelPropagation(G)
-    
+    #plotLocal(G)
+    #labelPropagation(G)
 
-    '''
-    #Use VADER tool (https://github.com/cjhutto/vaderSentiment), which output sentiment in terms
-    #of POSITIVE, NEGATIVE and NEUTRAL to determine the sentiment of each post of the dataset.
-    #Then represent the sentiment of each tweet as a point in the ternary plot.
+    degreeCent = nx.degree_centrality(G)
+    eigenCent = nx.eigenvector_centrality(G)
+    pageRankCent = nx.pagerank(G)
 
-    analyzedArray = textAnalyze(df['Text'].to_numpy())
+    pearsonCorrelation(degreeCent)
+    pearsonCorrelation(eigenCent)
+    pearsonCorrelation(pageRankCent)
 
-    ternaryplot(analyzedArray)
-    #build a social graph where each node corresponds to a hashtag and an edge
-    #between hashtag A and hashtag B indicates that there is at least one post which contains both
-    #hashtag A and hashtag B
-    '''
