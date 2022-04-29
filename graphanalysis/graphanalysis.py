@@ -73,9 +73,8 @@ def countHashtags(hashtags):
     final_split = []
     splitted = []
     for hashtag in hashtags['Hashtags']:
-        print(hashtag)
         if (pd.isna(hashtag) == True):
-            continue
+            break
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
@@ -101,7 +100,7 @@ def parseTweets(tweetsRaw):
     TweetClasses = []
     for hashtag in tweetsRaw['Hashtags']:
         if (pd.isna(hashtag) == True):
-            continue
+            break
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -129,7 +128,7 @@ def ParsePublicMetrics(tweetsRaw):
     parsedSocials = []
     for hashtag in tweetsRaw['Public_metrics']:
         if (pd.isna(hashtag) == True):
-            continue
+            break
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -187,7 +186,7 @@ def textAnalyze(sentences):
     analyzed = []
     for sentence in sentences:
         if (pd.isna(sentence) == True):
-            continue
+            break
         analyzed.append(analyzer.polarity_scores(sentence))
     
     return analyzed
@@ -229,13 +228,14 @@ def calculateProperties(G):
     #Largest component of graph.
     Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
     G0 = G.subgraph(Gcc[0])
+    diameterLargest = nx.diameter(G0)
 
     #remove parentheses from right side to have the actual value in the table.
     data = [
         ["Nodes", nodes],
         ["Edges", edges],
         ["Degree centrality", roundedDegreeCent],
-        ["Diameter", "Infinite because disconnected"], 
+        ["Diameter of largest component", diameterLargest], 
         ["Cluster", roundedCluster],
         ["Largest component", G0]
     ]
@@ -371,7 +371,6 @@ def get_color(i, r_off=1, g_off=1, b_off=1):
 def build_hashtag_graph(list_of_hashtags, parsedTweets):
     G = nx.Graph()
     G.add_nodes_from(list_of_hashtags)
-
     for allHashtagsInTweet in parsedTweets: #lista hashtageista esim. [Ukraine, Russia]
         for hashtags in allHashtagsInTweet: # yksittäiset hashtagit esim. Ukraine -> Russia
             current = hashtags
@@ -379,7 +378,7 @@ def build_hashtag_graph(list_of_hashtags, parsedTweets):
                 if current != hashtags:
                     G.add_edge(current, hashtags)
 
-    nx.draw(G, with_labels = True)
+    nx.draw(G)
     plt.show()
     
     return G
@@ -392,10 +391,9 @@ def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
             currentNode = 0
             for hashtagClasses in parsedSocialInfoClasses:
                 if (currentNode > len(parsedSocialInfoClasses)):
-                    continue
+                    break
                 if NodeNameMatches(parsedSocialInfoClasses[currentNode].name, individualHashtags): 
                     tweetSocials = socials[currentTweetIndex]
-                    print(tweetSocials)
                     if (tweetSocials[0] == "Public_metrics"):
                         break
                     else:
@@ -418,12 +416,8 @@ def pearsonCorrelation(centrality):
 
     values = list(centrality.values())
 
-    print(len(values))
-    print(len(likes))
-
-
     corr = scipy.stats.pearsonr(likes, values)
-    #print(corr[0]) #[0] is pearson correlation
+    return corr[0]
 
 
 #"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
@@ -464,23 +458,30 @@ if __name__ == "__main__":
 
 
     G = build_hashtag_graph(final, parsedHashtags)
-    drawHistogram(counted_dict)
+    #drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
-    drawPiechart(df)
+    #drawPiechart(df)
 
-    analyzedArray = textAnalyze(df['Text'].to_numpy())
-    ternaryplot(analyzedArray)
+    #analyzedArray = textAnalyze(df['Text'].to_numpy())
+    #ternaryplot(analyzedArray)
     
-    calculateProperties(G)
+    #calculateProperties(G)
 
-    plotLocal(G)
-    labelPropagation(G)
+    #plotLocal(G)
+    #labelPropagation(G)
 
     degreeCent = nx.degree_centrality(G)
     eigenCent = nx.eigenvector_centrality(G)
     pageRankCent = nx.pagerank(G)
 
-    pearsonCorrelation(degreeCent)
-    pearsonCorrelation(eigenCent)
-    pearsonCorrelation(pageRankCent)
+    degreePearson = pearsonCorrelation(degreeCent)
+    eigenPearson = pearsonCorrelation(eigenCent)
+    pagerankPearson = pearsonCorrelation(pageRankCent)
+
+    print("Pearson correlation with Degree centrality: " + str(degreePearson))
+    print("Pearson correlation with Eigenvector centrality: " + str(eigenPearson))
+    print("Pearson correlation with Pagerank centrality: " + str(pagerankPearson))
+
+    
+
 
