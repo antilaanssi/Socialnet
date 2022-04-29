@@ -73,9 +73,8 @@ def countHashtags(hashtags):
     final_split = []
     splitted = []
     for hashtag in hashtags['Hashtags']:
-        print(hashtag)
-        if (pd.isna(hashtag) == True):
-            continue
+        #if (pd.isna(hashtag) == True):
+        #    continue
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
@@ -94,8 +93,8 @@ def parseTweets(tweetsRaw):
     parsedHashtags = []
     TweetClasses = []
     for hashtag in tweetsRaw['Hashtags']:
-        if (pd.isna(hashtag) == True):
-            continue
+        #if (pd.isna(hashtag) == True):
+         #   continue
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -115,8 +114,8 @@ def parseTweets(tweetsRaw):
 def ParsePublicMetrics(tweetsRaw):
     parsedSocials = []
     for hashtag in tweetsRaw['Public_metrics']:
-        if (pd.isna(hashtag) == True):
-            continue
+        #if (pd.isna(hashtag) == True):
+         #   continue
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -166,8 +165,8 @@ def textAnalyze(sentences):
     analyzer = SentimentIntensityAnalyzer()
     analyzed = []
     for sentence in sentences:
-        if (pd.isna(sentence) == True):
-            continue
+        #if (pd.isna(sentence) == True):
+            #continue
         analyzed.append(analyzer.polarity_scores(sentence))
     
     return analyzed
@@ -375,7 +374,6 @@ def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
                     continue
                 if NodeNameMatches(parsedSocialInfoClasses[currentNode].name, individualHashtags): 
                     tweetSocials = socials[currentTweetIndex]
-                    print(tweetSocials)
                     if (tweetSocials[0] == "Public_metrics"):
                         break
                     else:
