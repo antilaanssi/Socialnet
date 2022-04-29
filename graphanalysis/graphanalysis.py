@@ -73,8 +73,9 @@ def countHashtags(hashtags):
     final_split = []
     splitted = []
     for hashtag in hashtags['Hashtags']:
+        print(hashtag)
         if (pd.isna(hashtag) == True):
-            break
+            continue
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
@@ -83,7 +84,10 @@ def countHashtags(hashtags):
             i = i.replace(".", "")
             i = i.replace(":", "")
             i = i.replace(".", "")
-            i = i.replace(".", "")
+            i = i.replace(",", "")
+            i = i.replace("|", "")
+            i = i.replace('"', "")
+            i = i.replace('#', "")
             final_split.append(i)
     
     counted = Counter(final_split)
@@ -97,7 +101,7 @@ def parseTweets(tweetsRaw):
     TweetClasses = []
     for hashtag in tweetsRaw['Hashtags']:
         if (pd.isna(hashtag) == True):
-            break
+            continue
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -107,7 +111,10 @@ def parseTweets(tweetsRaw):
             i = i.replace(".", "")
             i = i.replace(":", "")
             i = i.replace(".", "")
-            i = i.replace(".", "")
+            i = i.replace(",", "")
+            i = i.replace("|", "")
+            i = i.replace('"', "")
+            i = i.replace('#', "")
             tempList.append(i)
 
             if not NodeNameExists(TweetClasses, i):
@@ -122,7 +129,7 @@ def ParsePublicMetrics(tweetsRaw):
     parsedSocials = []
     for hashtag in tweetsRaw['Public_metrics']:
         if (pd.isna(hashtag) == True):
-            break
+            continue
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
@@ -132,11 +139,15 @@ def ParsePublicMetrics(tweetsRaw):
             i = i.replace(".", "")
             i = i.replace(":", "")
             i = i.replace(".", "")
-            i = i.replace(".", "")
+            i = i.replace(",", "")
+            i = i.replace("|", "")
+            i = i.replace('"', "")
+            i = i.replace('#', "")
             i = i.replace("retweet_count", "")
             i = i.replace("reply_count", "")
             i = i.replace("like_count", "")
             i = i.replace("quote_count", "")
+            i = i.replace(":", "")
             tempList.append(i)
 
         parsedSocials.append(tempList)
@@ -176,7 +187,7 @@ def textAnalyze(sentences):
     analyzed = []
     for sentence in sentences:
         if (pd.isna(sentence) == True):
-            break
+            continue
         analyzed.append(analyzer.polarity_scores(sentence))
     
     return analyzed
@@ -384,6 +395,7 @@ def FetchSocialAttributes(socials, parsedHashtags, parsedSocialInfoClasses):
                     continue
                 if NodeNameMatches(parsedSocialInfoClasses[currentNode].name, individualHashtags): 
                     tweetSocials = socials[currentTweetIndex]
+                    print(tweetSocials)
                     if (tweetSocials[0] == "Public_metrics"):
                         break
                     else:
@@ -406,9 +418,12 @@ def pearsonCorrelation(centrality):
 
     values = list(centrality.values())
 
+    print(len(values))
+    print(len(likes))
+
+
     corr = scipy.stats.pearsonr(likes, values)
-    print(corr[0]) #[0] is pearson correlation
-    return corr[0]
+    #print(corr[0]) #[0] is pearson correlation
 
 
 #"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
@@ -465,13 +480,7 @@ if __name__ == "__main__":
     eigenCent = nx.eigenvector_centrality(G)
     pageRankCent = nx.pagerank(G)
 
-    
-    degreePearson = pearsonCorrelation(degreeCent)
-    eigenPearson = pearsonCorrelation(eigenCent)
-    pagerankPearson = pearsonCorrelation(pageRankCent)
-
-    print("Pearson correlation with Degree centrality is: " + str(degreePearson))
-    print("Pearson correlation with Eigen centrality is: " + str(eigenPearson))
-    print("Pearson correlation with Pagerank centrality is: " + str(pagerankPearson))
-
+    pearsonCorrelation(degreeCent)
+    pearsonCorrelation(eigenCent)
+    pearsonCorrelation(pageRankCent)
 
