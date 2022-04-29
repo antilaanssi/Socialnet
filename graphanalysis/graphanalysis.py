@@ -73,13 +73,16 @@ def countHashtags(hashtags):
     final_split = []
     splitted = []
     for hashtag in hashtags['Hashtags']:
-        #if (pd.isna(hashtag) == True):
-        #    continue
+        if (pd.isna(hashtag) == True):
+            break
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
             i = i.replace("{", "")
             i = i.replace("}", "")
+            i = i.replace(".", "")
+            i = i.replace(":", "")
+            i = i.replace(".", "")
             i = i.replace(".", "")
             final_split.append(i)
     
@@ -93,14 +96,18 @@ def parseTweets(tweetsRaw):
     parsedHashtags = []
     TweetClasses = []
     for hashtag in tweetsRaw['Hashtags']:
-        #if (pd.isna(hashtag) == True):
-         #   continue
+        if (pd.isna(hashtag) == True):
+            break
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
             i = i.replace("{", "")
             i = i.replace("}", "")
+            i = i.replace(".", "")
+            i = i.replace(":", "")
+            i = i.replace(".", "")
+            i = i.replace(".", "")
             tempList.append(i)
 
             if not NodeNameExists(TweetClasses, i):
@@ -114,19 +121,22 @@ def parseTweets(tweetsRaw):
 def ParsePublicMetrics(tweetsRaw):
     parsedSocials = []
     for hashtag in tweetsRaw['Public_metrics']:
-        #if (pd.isna(hashtag) == True):
-         #   continue
+        if (pd.isna(hashtag) == True):
+            break
         tempList = []
         splitted = hashtag.split(", ")
         for i in splitted:
             i = i.replace("'", "")
             i = i.replace("{", "")
             i = i.replace("}", "")
+            i = i.replace(".", "")
+            i = i.replace(":", "")
+            i = i.replace(".", "")
+            i = i.replace(".", "")
             i = i.replace("retweet_count", "")
             i = i.replace("reply_count", "")
             i = i.replace("like_count", "")
             i = i.replace("quote_count", "")
-            i = i.replace(":", "")
             tempList.append(i)
 
         parsedSocials.append(tempList)
@@ -165,8 +175,8 @@ def textAnalyze(sentences):
     analyzer = SentimentIntensityAnalyzer()
     analyzed = []
     for sentence in sentences:
-        #if (pd.isna(sentence) == True):
-            #continue
+        if (pd.isna(sentence) == True):
+            break
         analyzed.append(analyzer.polarity_scores(sentence))
     
     return analyzed
@@ -396,12 +406,9 @@ def pearsonCorrelation(centrality):
 
     values = list(centrality.values())
 
-    print(len(values))
-    print(len(likes))
-
-
     corr = scipy.stats.pearsonr(likes, values)
-    #print(corr[0]) #[0] is pearson correlation
+    print(corr[0]) #[0] is pearson correlation
+    return corr[0]
 
 
 #"{'retweet_count': 34, 'reply_count': 0, 'like_count': 0, 'quote_count': 0}"
@@ -458,7 +465,13 @@ if __name__ == "__main__":
     eigenCent = nx.eigenvector_centrality(G)
     pageRankCent = nx.pagerank(G)
 
-    pearsonCorrelation(degreeCent)
-    pearsonCorrelation(eigenCent)
-    pearsonCorrelation(pageRankCent)
+    
+    degreePearson = pearsonCorrelation(degreeCent)
+    eigenPearson = pearsonCorrelation(eigenCent)
+    pagerankPearson = pearsonCorrelation(pageRankCent)
+
+    print("Pearson correlation with Degree centrality is: " + str(degreePearson))
+    print("Pearson correlation with Eigen centrality is: " + str(eigenPearson))
+    print("Pearson correlation with Pagerank centrality is: " + str(pagerankPearson))
+
 
