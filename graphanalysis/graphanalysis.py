@@ -336,6 +336,7 @@ def labelPropagation(G):
         pos=pos,
         node_color=node_color,
         edgelist=internal,
+        with_labels=False,
         edge_color=internal_color)
 
     plt.show()
@@ -380,7 +381,6 @@ def build_hashtag_graph(list_of_hashtags, parsedTweets):
 
     nx.draw(G)
     plt.show()
-    
     return G
 
 
@@ -458,17 +458,18 @@ if __name__ == "__main__":
 
 
     G = build_hashtag_graph(final, parsedHashtags)
-    #drawHistogram(counted_dict)
+    drawHistogram(counted_dict)
     #Use a pie chart illustrations to show the language of the posts for each of the above main hashtags.
     #drawPiechart(df)
 
-    #analyzedArray = textAnalyze(df['Text'].to_numpy())
-    #ternaryplot(analyzedArray)
+    analyzedArray = textAnalyze(df['Text'].to_numpy())
+    ternaryplot(analyzedArray)
     
-    #calculateProperties(G)
+    calculateProperties(G)
 
-    #plotLocal(G)
-    #labelPropagation(G)
+    plotLocal(G)
+    plotDegree(G)
+    labelPropagation(G)
 
     degreeCent = nx.degree_centrality(G)
     eigenCent = nx.eigenvector_centrality(G)
